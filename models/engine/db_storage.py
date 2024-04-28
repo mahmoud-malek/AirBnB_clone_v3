@@ -89,7 +89,7 @@ class DBStorage:
                 return val
         return None
 
-    def count(self, cls=None):
+def count(self, cls=None):
         """ count number of ojbects """
 
         if cls:
