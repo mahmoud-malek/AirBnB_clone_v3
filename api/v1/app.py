@@ -3,7 +3,7 @@
 main app
 """
 import os
-from flask import Flask
+from flask import Flask, jsonify
 from models import storage
 from api.v1.views import app_views
 
@@ -19,6 +19,11 @@ def close_storage(error=None):
     Close the DB conn when the app is torn down
     """
     storage.close()
+
+
+@app.errorhandler(404)
+def error_handle(error):
+    return jsonify({"error": "Not found"})
 
 
 if __name__ == "__main__":
