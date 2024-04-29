@@ -27,6 +27,7 @@ def get_state(state_id):
         abort(404)
     return (jsonify(obj.to_dict()))
 
+
 @app_views.route('states/<state_id>', methods=['DELETE'])
 def delete_state(state_id):
     '''delete a state'''
@@ -34,7 +35,7 @@ def delete_state(state_id):
 
     if obj is None:
         abort(404)
-    
+
     storage.delete(obj)
     storage.save()
 
@@ -48,7 +49,7 @@ def add_state():
 
     if not data:
         abort(400, 'Not a JSON')
-    
+
     if 'name' not in data:
         abort(400, 'Missing name')
 
@@ -57,6 +58,7 @@ def add_state():
     storage.new(new_state)
     storage.save()
     return jsonify(new_state.to_dict()), 201
+
 
 @app_views.route('/states/<state_id>', methods=['PUT'])
 def updates_state(state_id):
