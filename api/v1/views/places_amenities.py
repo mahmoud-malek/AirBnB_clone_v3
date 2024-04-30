@@ -14,7 +14,7 @@ import uuid
 def get_amenities(place_id):
     """ gets all amenities of a place """
 
-    place = storage.all('place').get(place_id)
+    place = storage.all('Place').get(place_id)
     if (place is None):
         abort(404)
 
@@ -27,20 +27,20 @@ def get_amenities(place_id):
 @app_views.route('/places/<place_id>/amenities/<amenity_id>',
                  methods=['DELETE'])
 def deleteAmenity(place_id, amenity_id):
-    """ delets an amenity of a place by id """
+    """ deletes an amenity of a place by id """
 
     place = storage.all('Place').get(place_id)
     if (place is None):
         abort(404)
 
     amenity = storage.all('Amenity').get(amenity_id)
-    if amenity is None:
+    if amenity is None or amenity not in place.amenities:
         abort(404)
 
-    if amenity not in place.amenities:
-        abort(404)
-
-    place.amenities.remove(amenity)
+    if storage_t == 'db':
+        place.amenities.remove(amenity)
+    else:
+        place.amenity_ids.remove(amenity_id)
     storage.save()
     return jsonify({}), 200
 
@@ -50,7 +50,7 @@ def addAmenity(place_id, amenity_id):
     """ add an amenity to a place """
 
     place = storage.all('Place').get(place_id)
-    if not palce:
+    if not place:
         abort(404)
 
     amenity = storage.all('Amenity').get(amenity_id)
@@ -58,8 +58,11 @@ def addAmenity(place_id, amenity_id):
         abort(404)
 
     if amenity in place.amenities:
-        return jsonify(Amenity), 200
+        return jsonify(amenity.to_dict()), 200
 
-    place.amenities.append(amenity)
+    if storage_t == 'db':
+        place.amenities.append(amenity)
+    else:
+        place.amenity_ids.append(amenity_id)
     storage.save()
-    return jsonify(Amenity), 201
+    return jsonify(amenity.to_dict()), 201
