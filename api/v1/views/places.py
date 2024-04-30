@@ -91,40 +91,31 @@ def retriveAll():
     if body is None:
         abort(400, 'Not a JSON')
 
-    states = body.get('states', [])
-    cities = body.get('cities', [])
-    amenities = body.get('amenities', [])
+    states_id = body.get('states', [])
+    cities_id = body.get('cities', [])
+    amenities_id = body.get('amenities', [])
 
-    if not states and not cities and not amenities:
+    if states_id == cities_id == []:
         places = [place.to_dict() for place in storage.all("Place").values()]
         return jsonify(places)
 
-    places = []
+    else:
+        states = [storage.get("State", state_id) for state_id in states_id]
+        cities = [city for state in states for city in state.cities]
+        cities.extend([
+            storage.get("City", city_id) for city_id in cities_id
+            if storage.get("City", city_id)
+        ])
+        cities = list(set(cities))
 
-    # filter by states
-    for state_id in states:
-        state = storage.get("State", state_id)
-        if state:
-            for city in state.cities:
-                for place in city.places:
-                    places.append(place)
+        places = [place for city in cities for place in city.places]
 
-    # filter by cities
-    for city_id in cities:
-        city = storage.get("City", city_id)
-        if city:
-            for place in city.places:
-                if place not in places:
-                    places.append(place)
+    amenities = [
+        storage.get("Amenity", amenity_id) for amenity_id in amenities_id
+        if storage.get("Amenity", amenity_id)
+    ]
 
-    # filter by amenities
-    if amenities:
-        for place in places:
-            for amenity in amenities:
-                if amenity not in place.amenities:
-                    places.remove(place)
-            else:
-                places.append(place)
+    places = [place for place in places if all(
+        amenity in place.amenities for amenity in amenities)]
 
-    places = [place.to_dict() for place in places]
-    return jsonify(places)
+    return jsonify([place.to_dict() for place in places])
