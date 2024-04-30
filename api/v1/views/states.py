@@ -9,7 +9,7 @@ from models.state import State
 import uuid
 
 
-@app_views.route('/states')
+@app_views.route('/states', methods=['GET'])
 def list_states():
     """ Returns a list of all states """
     states = storage.all("State").values()
@@ -19,12 +19,13 @@ def list_states():
     return (jsonify(objs_dicts))
 
 
-@app_views.route('/states/<state_id>')
+@app_views.route('/states/<state_id>', methods=['GET'])
 def get_state(state_id):
     """ gets a state by id """
     obj = storage.get("State", state_id)
     if obj is None:
-        abort(404)
+        abort(404, 'Not found')
+
     return (jsonify(obj.to_dict()))
 
 
@@ -33,7 +34,7 @@ def delete_state(state_id):
     """is a method to delete a state by id"""
     obj = storage.get("State", state_id)
     if obj is None:
-        abort(404)
+        abort(404, 'Not found')
     storage.delete(obj)
     storage.save()
     return (jsonify({}), 200)
@@ -56,16 +57,14 @@ def create_state():
 @app_views.route('/states/<state_id>', methods=['PUT'])
 def updates_state(state_id):
     """ updates the key value pairs """
-    obj = storage.get("State", state_id)
-    if not obj:
-        abort(404)
-    if not request.get_json():
+    data = request.get_json()
+    if not data:
         abort(400, 'Not a JSON')
-
-    updated_dic = requests.get_json()
-    for key, value in updated_dic.items():
+    obj = storage.get("State", state_id)
+    if obj is None:
+        abort(404, 'Not found')
+    for key, value in data.items():
         if key not in ['id', 'created_at', 'updated_at']:
             setattr(obj, key, value)
-
     storage.save()
     return (jsonify(obj.to_dict()), 200)
