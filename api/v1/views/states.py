@@ -11,30 +11,27 @@ import uuid
 
 @app_views.route('/states', methods=['GET'])
 def list_states():
-    """ Returns a list of all states """
-    states = storage.all("State").values()
-    objs_dicts = []
-    for stat in states:
-        objs_dicts.append(stat.to_dict())
-    return (jsonify(objs_dicts))
+    """ lists all states """
+    states = [state.to_dict() for state in storage.all("State").values()]
+    return jsonify(states)
 
 
 @app_views.route('/states/<state_id>', methods=['GET'])
 def get_state(state_id):
-    """ gets a state by id """
+    """ Retrieves a state by id """
     obj = storage.get("State", state_id)
     if obj is None:
         abort(404, 'Not found')
-
     return (jsonify(obj.to_dict()))
 
 
 @app_views.route('/states/<state_id>', methods=['DELETE'])
 def delete_state(state_id):
-    """is a method to delete a state by id"""
+    """ deletes a state by id """
     obj = storage.get("State", state_id)
     if obj is None:
         abort(404, 'Not found')
+
     storage.delete(obj)
     storage.save()
     return (jsonify({}), 200)
@@ -42,17 +39,13 @@ def delete_state(state_id):
 
 @app_views.route('/states/', methods=['POST'])
 def create_state():
-    """ creates a new state object """
+    """ creates a state """
     data = request.get_json()
     if not data:
-        abort(400)
-        return jsonify({"error": "Not a JSON"})
-
+        return jsonify({"error": "Not a JSON"}), 400
     if 'name' not in data:
-        abort(400)
-        return jsonify({"error": "Missing name"})
-
-    new_state = State(name=data['name'])
+        return jsonify({"error": "Missing name"}), 400
+    new_state = State(**data)
     storage.new(new_state)
     storage.save()
     return (jsonify(new_state.to_dict()), 201)
@@ -61,14 +54,14 @@ def create_state():
 @app_views.route('/states/<state_id>', methods=['PUT'])
 def updates_state(state_id):
     """ updates the key value pairs """
-    data = request.get_json()
-    if not data:
-        abort(400, 'Not a JSON')
-        return jasonify({"error": "Not a JSON"})
-
     obj = storage.get("State", state_id)
     if obj is None:
         abort(404, 'Not found')
+
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Not a JSON"}), 400
+
     for key, value in data.items():
         if key not in ['id', 'created_at', 'updated_at']:
             setattr(obj, key, value)
